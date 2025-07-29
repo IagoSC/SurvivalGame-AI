@@ -15,8 +15,18 @@ class HumanAgent(Agent):
         # O estado é ignorado - entrada vem do teclado
         return 0  # Padrão: não fazer nada (será sobrescrito pela entrada do usuário no manual_play.py)
 
+
+# NEURAL NETWORK AGENT
+# Define the structure of the neural network layers
+def neuralNetworkLayers(grid_size = 5): 
+    return [
+        (grid_size**2 + 2, 32),  # Primeira camada: 27 entradas, 32 neurônios
+        (32, 16),  # Segunda camada: 32 entradas, 16 neurônios
+        (16, 3)    # Camada de saída: 16 entradas, 3 saídas (ações)
+    ]
+
 class NeuralNetworkAgent(Agent):
-    def __init__(self, network_setup: np.ndarray):
+    def __init__(self, grid_size: int, network_setup: np.ndarray):
         """
         Initialize the neural network agent with weights.
         
@@ -24,13 +34,7 @@ class NeuralNetworkAgent(Agent):
             network_setup: Linear array of weights and biases for each layer of the neural network.
         """
 
-        layers = [
-            (27, 32),  # First layer: 27 inputs, 32 neurons
-            (32, 16),  # Second layer: 32 inputs, 16 neurons
-            (16, 3)    # Output layer: 16 inputs, 3 outputs (actions)
-        ]
-
-
+        layers = neuralNetworkLayers(grid_size)
         if len(network_setup) != sum(layer_in * layer_out + layer_out for layer_in, layer_out in layers):
             raise ValueError("Invalid network setup length.")
 
@@ -40,9 +44,9 @@ class NeuralNetworkAgent(Agent):
         for layer_in, layer_out in layers:
             w_size = layer_in * layer_out
             b_size = layer_out
-            weights.append(network_setup[idx: idx + w_size].reshape(layer_in, layer_out))
+            weights.append(np.array(network_setup[idx: idx + w_size]).reshape(layer_in, layer_out))
             idx += w_size
-            weights.append(network_setup[idx: idx + b_size].reshape(layer_out))
+            weights.append(np.array(network_setup[idx: idx + b_size]).reshape(layer_out))
             idx += b_size
 
         if len(weights) != 6:
