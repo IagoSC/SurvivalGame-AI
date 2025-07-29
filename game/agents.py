@@ -16,10 +16,83 @@ class HumanAgent(Agent):
         return 0  # Padrão: não fazer nada (será sobrescrito pela entrada do usuário no manual_play.py)
 
 class NeuralNetworkAgent(Agent):
-    def __init__(self):
-        #TODO
-        pass
+    def __init__(self, network_setup: np.ndarray):
+        """
+        Initialize the neural network agent with weights.
+        
+        Args:
+            network_setup: Linear array of weights and biases for each layer of the neural network.
+        """
+
+        layers = [
+            (27, 32),  # First layer: 27 inputs, 32 neurons
+            (32, 16),  # Second layer: 32 inputs, 16 neurons
+            (16, 3)    # Output layer: 16 inputs, 3 outputs (actions)
+        ]
+
+
+        if len(network_setup) != sum(layer_in * layer_out + layer_out for layer_in, layer_out in layers):
+            raise ValueError("Invalid network setup length.")
+
+        # Transform linear input into bias and weights arrays
+        weights = []
+        idx = 0
+        for layer_in, layer_out in layers:
+            w_size = layer_in * layer_out
+            b_size = layer_out
+            weights.append(network_setup[idx: idx + w_size].reshape(layer_in, layer_out))
+            idx += w_size
+            weights.append(network_setup[idx: idx + b_size].reshape(layer_out))
+            idx += b_size
+
+        if len(weights) != 6:
+            raise ValueError("Expected 6 weight arrays: [W1, b1, W2, b2, W3, b3]")
+        
+        # Validate weight dimensions
+        if weights[0].shape != (27, 32):
+            raise ValueError(f"First layer weights should be (27, 32), got {weights[0].shape}")
+        if weights[1].shape != (32,):
+            raise ValueError(f"First layer bias should be (32,), got {weights[1].shape}")
+        if weights[2].shape != (32, 16):
+            raise ValueError(f"Second layer weights should be (32, 16), got {weights[2].shape}")
+        if weights[3].shape != (16,):
+            raise ValueError(f"Second layer bias should be (16,), got {weights[3].shape}")
+        if weights[4].shape != (16, 3):
+            raise ValueError(f"Output layer weights should be (16, 3), got {weights[4].shape}")
+        if weights[5].shape != (3,):
+            raise ValueError(f"Output layer bias should be (3,), got {weights[5].shape}")
+        
+        self.W1 = weights[0]
+        self.b1 = weights[1]
+        self.W2 = weights[2]
+        self.b2 = weights[3]
+        self.W3 = weights[4]
+        self.b3 = weights[5]
     
     def predict(self, state: np.ndarray) -> int:
-        #TODO
-        pass
+        """
+        Forward pass through the neural network.
+        
+        Args:
+            state: Input state vector of length 27
+            
+        Returns:
+            int: Action index (0: up, 1: down, 2: noop)
+        """
+        if len(state) != 27:
+            raise ValueError(f"Expected state of length 27, got {len(state)}")
+        
+        # Forward pass
+        # First hidden layer with tanh activation
+        z1 = np.dot(state, self.W1) + self.b1
+        a1 = np.tanh(z1)
+        
+        # Second hidden layer with tanh activation
+        z2 = np.dot(a1, self.W2) + self.b2
+        a2 = np.tanh(z2)
+        
+        # Output layer (no activation, raw logits)
+        z3 = np.dot(a2, self.W3) + self.b3
+        
+        # Return the action with highest output value
+        return np.argmax(z3)
