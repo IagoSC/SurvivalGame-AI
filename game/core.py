@@ -113,7 +113,7 @@ class SurvivalGame:
     def update(self, actions: List[int]):
         """Atualiza o estado do jogo com base nas ações de todos os jogadores"""
         self.frame_count += 1
-        
+
         for i, player in enumerate(self.players):
             if not player.alive:
                 continue
@@ -198,9 +198,6 @@ class SurvivalGame:
                 score_text = self.font.render(f"Score: {int(player.score)}", True, (255,0,0))
                 self.screen.blit(score_text, (10, 10))
                 break
-        
-        if self.config.render_grid:
-            self._render_sensor_grid()
 
         pygame.display.flip()
         self.clock.tick(self.config.fps)

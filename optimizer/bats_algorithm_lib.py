@@ -25,7 +25,6 @@ class BatAlgorithm():
         self.best = [0] * self.D  #best solution
         self.Fun = function
 
-
     def best_bat(self):
         j = 0 # Best index
         for i in range(self.NP):

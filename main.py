@@ -17,7 +17,7 @@ RENDER_TRAIN = False
 RENDER_TEST = True
 
 
-game_config = GameConfig(num_players=POPULATION_SIZE,fps=60)
+game_config = GameConfig(num_players=POPULATION_SIZE,fps=120)
 
 
 def game_fitness_function(population: np.ndarray) -> float:
@@ -90,7 +90,7 @@ def train_and_test():
 
     ba.move_bat()
 
-    best_fitness_overall = ba.f_min
+    best_fitness_overall = ba.f_max
     best_weights_overall = ba.best
     print(f"Melhor Fitness Inicial: {best_fitness_overall:.2f}")
 
