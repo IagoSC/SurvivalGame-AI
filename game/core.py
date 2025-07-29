@@ -169,17 +169,20 @@ class SurvivalGame:
         self.screen.fill((0, 0, 0))
         
         # draw players
+        n_players_alive = sum(player.alive for player in self.players)
         for player in self.players:
             if player.alive:
-                pygame.draw.circle(
-                    self.screen, 
-                    player.color, 
-                    (
-                        self.config.player_x + self.config.player_radius, 
-                        int(player.y)
-                    ), 
-                    self.config.player_radius
-                )
+                if n_players_alive > 20 and random.random() < 0.2 or n_players_alive > 12 and random.random() < 0.8 or n_players_alive <= 12:
+                    self._render_sensor_grid_player(player)
+                    pygame.draw.circle(
+                        self.screen, 
+                        player.color, 
+                        (
+                            self.config.player_x + self.config.player_radius, 
+                            int(player.y)
+                        ), 
+                        self.config.player_radius
+                    )
         
         # draw obstacles
         for obstacle in self.obstacles:
@@ -206,28 +209,26 @@ class SurvivalGame:
     def all_players_dead(self) -> bool:
         return all(not player.alive for player in self.players)
 
-    def _render_sensor_grid(self):
-        for player in self.players:
-            if not player.alive:
-                continue
+    def _render_sensor_grid_player(self, player):
+        if not player.alive:
+            return
+        grid = self.get_sensor_grid(player.y)
+        grid_size = self.config.sensor_grid_size
+        cell_size = self.config.sensor_range / grid_size
+        half_range = self.config.sensor_range / 2
 
-            grid = self.get_sensor_grid(player.y)
-            grid_size = self.config.sensor_grid_size
-            cell_size = self.config.sensor_range / grid_size
-            half_range = self.config.sensor_range / 2
+        grid_top = player.y - half_range
 
-            grid_top = player.y - half_range
+        for row in range(grid_size):
+            for col in range(grid_size):
+                x = self.config.player_x + col * cell_size
+                y = grid_top + row * cell_size
 
-            for row in range(grid_size):
-                for col in range(grid_size):
-                    x = self.config.player_x + col * cell_size
-                    y = grid_top + row * cell_size
+                color = (255, 0, 0) if grid[row, col] == 1 else (100, 100, 100)
+                rect = pygame.Rect(x, y, cell_size, cell_size)
+                pygame.draw.rect(self.screen, color, rect, 1)
 
-                    color = (255, 0, 0) if grid[row, col] == 1 else (100, 100, 100)
-                    rect = pygame.Rect(x, y, cell_size, cell_size)
-                    pygame.draw.rect(self.screen, color, rect, 1)
-
-            center_row = grid_size // 2
-            x = self.config.player_x
-            y = grid_top + center_row * cell_size
-            pygame.draw.rect(self.screen, (0, 255, 0), (x, y, cell_size, cell_size), 2)
+        center_row = grid_size // 2
+        x = self.config.player_x
+        y = grid_top + center_row * cell_size
+        pygame.draw.rect(self.screen, (0, 255, 0), (x, y, cell_size, cell_size), 2)
