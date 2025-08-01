@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Python File",
+            "name": "Python DBG: test_functions.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}"
+            "program": "${cwd}/optimizer/test_functions.py",
         }
     ]
 }

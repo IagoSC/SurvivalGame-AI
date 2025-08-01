@@ -1,0 +1,5 @@
+**/__pycache__/**
+**/*.pyc
+bat_evolution.gif
+fitness_evolution.png
+position_evolution.png

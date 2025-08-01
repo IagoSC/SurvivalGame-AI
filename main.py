@@ -1,18 +1,16 @@
 import numpy as np
 from game.core import SurvivalGame, GameConfig
 from game.agents import NeuralNetworkAgent, neuralNetworkLayers
-from optimizer.bats_algorithm_lib import BatAlgorithm
+from optimizer.bats_algorithm import BatsAlgorithm
 import os
 import sys
 import time
-
-from optimizer.bats_algorithm import BatsConfig
 from test_trained_agent import test_agent
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 POPULATION_SIZE = 500
-GENERATIONS = 100
+GENERATIONS = 10_000
 RENDER_TRAIN = False
 RENDER_TEST = True
 
@@ -29,7 +27,10 @@ def game_fitness_function(population: np.ndarray) -> float:
     ] 
 
     total_scores = np.zeros(len(agents))
-    for i in range(3):
+
+    n_runs = 3
+    best_run = 0
+    for i in range(n_runs):
         game = SurvivalGame(config=game_config, render=RENDER_TRAIN)
         while not game.all_players_dead():
             actions = []
@@ -45,53 +46,36 @@ def game_fitness_function(population: np.ndarray) -> float:
             if game.render:
                 game.render_frame()
         for idx, player in enumerate(game.players):
+            if best_run < player.score:
+                best_run = player.score
             total_scores[idx] += player.score
 
-    average_scores = total_scores / 3
-    print(f"Melhor: {np.max(average_scores):.2f} | Média: {np.mean(average_scores):.2f} | Std: {np.std(average_scores):.2f}")
+    average_scores = total_scores / n_runs
+
+    print(f"Melhor Run: {best_run:.2f} | Melhor Individuo: {np.max(average_scores):.2f} | Média: {np.mean(average_scores):.2f} | Std: {np.std(average_scores):.2f}")
     return average_scores
 
 def train_and_test():
     print("\n--- Iniciando Treinamento com Algoritmo Genético ---")
 
     n_dimensions = sum(layer_in * layer_out + layer_out for layer_in, layer_out in neuralNetworkLayers(grid_size=game_config.sensor_grid_size))
-    
-    ba_config = BatsConfig(
-        space_dimensions=n_dimensions,
-        space_lower_bound=-1.0,
-        space_upper_bound=1.0,
-        population_size=POPULATION_SIZE,
-        max_iterations=GENERATIONS,
-        alpha=0.9,
-        gamma=0.9,
-        min_freq=0.0,
-        max_freq=0.8,
-        min_A=0.0,
-        max_A=1.0,
-        min_pulse_rate=0.0,
-        max_pulse_rate=1.0
-    )
 
-    ba = BatAlgorithm(
-        ba_config.space_dimensions,
-        ba_config.population_size,
-        ba_config.max_iterations,
-        0.9,
-        0.2,
-        ba_config.min_freq,
-        ba_config.max_freq,
-        ba_config.space_lower_bound,
-        ba_config.space_upper_bound,
-        lambda x, y: game_fitness_function(y),
+    ba = BatsAlgorithm(
+        dimensions=n_dimensions,
+        population_size=POPULATION_SIZE,
+        max_gen=GENERATIONS,
     )
 
     best_weights_overall = None
     best_fitness_overall = -np.inf
 
-    ba.move_bat()
+    ba.optimize(
+        fitness_function=game_fitness_function,
+    )
 
-    best_fitness_overall = ba.f_max
-    best_weights_overall = ba.best
+    best_fitness_overall = ba.best_fitness
+    best_weights_overall = ba.best_solution
+
     print(f"Melhor Fitness Inicial: {best_fitness_overall:.2f}")
 
     print(f'Backup generation -> Melhor Fitness Geral: {best_fitness_overall:.2f}')
