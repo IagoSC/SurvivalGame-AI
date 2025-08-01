@@ -15,6 +15,7 @@ GENERATIONS = 1_000
 RENDER_TRAIN = False
 RENDER_TEST = True
 COLLECT_STATS = True
+USE_BIAS = True 
 
 game_config = GameConfig(num_players=POPULATION_SIZE,fps=1800)
 
@@ -24,6 +25,7 @@ def game_fitness_function(population: np.ndarray) -> float:
         NeuralNetworkAgent(
             grid_size=game_config.sensor_grid_size,
             network_setup=weights
+            useBias=USE_BIAS
         ) for weights in population
     ] 
 
@@ -61,7 +63,7 @@ def train_and_test():
     
     db.init_db()
     
-    _, n_dimensions = neuralNetworkLayers(grid_size=game_config.sensor_grid_size)
+    _, n_dimensions = neuralNetworkLayers(grid_size=game_config.sensor_grid_size, useBias=USE_BIAS)
 
     ba = BatsAlgorithm(
         dimensions=n_dimensions,
