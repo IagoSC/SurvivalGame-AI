@@ -1,55 +1,40 @@
 import numpy as np
-from bats_algorithm_lib import BatAlgorithm as BA
+# from bats_algorithm import BatsConfig
+from bats_algorithm import BatsAlgorithm as BA
+from bats_algorithm_indonesio import BatAlgorithm as BAI
 
-def sphere_function(d, x):
-    """
-    Sphere function.
-    Global minimum at x = [0, 0, 0, 0, 0], f(x) = 0
-    """
-    solutions = [np.sum(np.square(el)) for el in x]
-    return solutions
+from plotter import Plotter
 
-def rastrigin_function(x):
+def maximization_benchmark_function(x):
     """
-    Rastrigin function.
-    Global minimum at x = [0, 0, 0, 0, 0], f(x) = 0
+    Maximization benchmark function.
+    The maximum value is at the origin (0, 0, ..., 0).
+    Example: Negative sphere function shifted to be maximized at zero.
     """
-    A = 10
-    return A * len(x) + np.sum(np.square(x) - A * np.cos(2 * np.pi * x))
 
-def ackley_function(x):
-    """
-    Ackley function.
-    Global minimum at x = [0, 0, 0, 0, 0], f(x) = 0
-    """
-    a = 20
-    b = 0.2
-    c = 2 * np.pi
-    n = len(x)
-    sum_sq = np.sum(np.square(x))
-    sum_cos = np.sum(np.cos(c * x))
-    return -a * np.exp(-b * np.sqrt(sum_sq / n)) - np.exp(sum_cos / n) + a + np.exp(1)
+    return [-np.sum(np.square(el)) for el in x]
 
-
+def egg_crate_function(x):
+    """
+    Egg crate function for minimization.
+    The minimum value is at the origin (0, 0, ..., 0).
+    """
+    return [-(np.sum([el**2 for el in xi]) + 25 * np.sum(np.sin(xi))) for xi in x]
 
 if __name__ == "__main__":
     # Example usage
-    ba = BA(250, 40, 100, 1, 0.2, 0.0, 3.0, -10, 10, sphere_function)
-    ba.move_bat()
-
-    print("Best position:", ba.best)
-    print("Best fitness:", ba.f_min)
-
-
-    # ba2.optimize(sphere_function)
-    # print("Best position:", ba.positions[ba.current_best_idx])
-    # print("Best fitness:", ba.current_gen_fitness[ba.current_best_idx])
-
-    # ba.optimize(rastrigin_function)
-    # print("Best position:", ba.positions[ba.current_best_idx])
-    # print("Best fitness:", ba.current_gen_fitness[ba.current_best_idx])
-
-    # ba.optimize(ackley_function)
-    # print("Best position:", ba.positions[ba.current_best_idx])
-    # print("Best fitness:", ba.current_gen_fitness[ba.current_best_idx])
-
+    ba = BA(
+        population_size = 15,
+        dimensions=2,
+        max_gen=200,
+        plot_evolution=True,
+        lower_bound=-10,
+        upper_bound=10,
+        max_freq=2.5,
+        plotter=Plotter
+    )
+    best_bat, best_fitness = ba.optimize(fitness_function=egg_crate_function )
+    ba.plot(interval=200, save_path="bat_evolution.gif")
+    
+    print("Best bat position:", best_bat)
+    print("Best bat fitness:", best_fitness)
