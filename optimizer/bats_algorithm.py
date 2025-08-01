@@ -64,13 +64,16 @@ class BatsAlgorithm:
         rand = np.random.uniform(0,1, self.population_size)
         is_moving = np.greater(rand,  self.pulse_rate)
 
-        epsilon = np.where(
+        best_positions = np.array([best_position] * self.population_size)
+
+        place_of_search = np.where(
             is_moving[:, np.newaxis],
-            np.random.uniform(-1, 1, current_positions.shape) * avg_loudness,
+            best_positions,
             self.positions + self.velocities
         )
-        best_positions = np.array([best_position] * self.population_size)
-        return np.clip(best_positions +  epsilon, self.lower_bound, self.upper_bound)
+
+        epsilon = np.random.uniform(-1, 1, (self.population_size, self.dimensions)) * avg_loudness
+        return np.clip(place_of_search +  epsilon, self.lower_bound, self.upper_bound)
 
     def optimize(self, fitness_function) -> np.ndarray:
         self._evaluate_population_fitness(fitness_function)
