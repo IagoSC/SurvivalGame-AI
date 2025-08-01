@@ -172,7 +172,7 @@ class SurvivalGame:
         n_players_alive = sum(player.alive for player in self.players)
         for player in self.players:
             if player.alive:
-                if n_players_alive > 20 and random.random() < 0.2 or n_players_alive > 12 and random.random() < 0.8 or n_players_alive <= 12:
+                if n_players_alive > 20 and random.random() < 0.05 or n_players_alive > 12 and random.random() < 0.8 or n_players_alive <= 12:
                     self._render_sensor_grid_player(player)
                     pygame.draw.circle(
                         self.screen, 

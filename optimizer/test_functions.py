@@ -30,11 +30,12 @@ if __name__ == "__main__":
         plot_evolution=True,
         lower_bound=-10,
         upper_bound=10,
-        max_freq=2.5,
+        max_freq=1.0,
         plotter=Plotter
     )
     best_bat, best_fitness = ba.optimize(fitness_function=egg_crate_function )
-    ba.plot(interval=200, save_path="bat_evolution.gif")
     
     print("Best bat position:", best_bat)
     print("Best bat fitness:", best_fitness)
+
+    ba.plot(interval=200, save_path="bat_evolution.gif")

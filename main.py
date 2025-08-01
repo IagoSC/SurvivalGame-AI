@@ -6,16 +6,17 @@ import os
 import sys
 import time
 from test_trained_agent import test_agent
+import db 
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-POPULATION_SIZE = 500
-GENERATIONS = 10_000
+POPULATION_SIZE = 100
+GENERATIONS = 1_000
 RENDER_TRAIN = False
 RENDER_TEST = True
+COLLECT_STATS = True
 
-
-game_config = GameConfig(num_players=POPULATION_SIZE,fps=120)
+game_config = GameConfig(num_players=POPULATION_SIZE,fps=1800)
 
 
 def game_fitness_function(population: np.ndarray) -> float:
@@ -57,8 +58,10 @@ def game_fitness_function(population: np.ndarray) -> float:
 
 def train_and_test():
     print("\n--- Iniciando Treinamento com Algoritmo Genético ---")
-
-    n_dimensions = sum(layer_in * layer_out + layer_out for layer_in, layer_out in neuralNetworkLayers(grid_size=game_config.sensor_grid_size))
+    
+    db.init_db()
+    
+    _, n_dimensions = neuralNetworkLayers(grid_size=game_config.sensor_grid_size)
 
     ba = BatsAlgorithm(
         dimensions=n_dimensions,
@@ -69,12 +72,62 @@ def train_and_test():
     best_weights_overall = None
     best_fitness_overall = -np.inf
 
-    ba.optimize(
-        fitness_function=game_fitness_function,
-    )
+    start_time = time.time()
 
-    best_fitness_overall = ba.best_fitness
-    best_weights_overall = ba.best_solution
+    run_id = f"{start_time}_run"
+    timestamp = time.strftime("%Y%m%d_%H%M%S", time.localtime(start_time))
+    table_runs = "runs"
+    table_bats = "bats"
+
+    if COLLECT_STATS:
+        db.add_to_table(table_runs, {
+            "run_id": run_id,
+            "timestamp": timestamp,
+            **ba.get_params(),
+        })
+
+    for current_gen in range(GENERATIONS):
+        current_time = time.time()
+        elapsed_time = current_time - start_time
+        if elapsed_time > 60 * 60 * 12:  # 12 hours
+            break
+
+        if COLLECT_STATS:
+            last_positions = ba.positions
+
+        best_solution, best_fitness = ba.move_bats(
+            fitness_function=game_fitness_function,
+            gen_idx=current_gen
+        )
+
+        if COLLECT_STATS:
+            loudness, positions, fitness = ba.loudness, ba.positions, ba.current_gen_fitness
+
+            dist_between_bats = np.linalg.norm(positions[:, np.newaxis] - positions, axis=2)
+
+            movement = np.linalg.norm(positions - last_positions, axis=1)
+            
+            db.add_to_table(table_bats, {
+                "run_id": run_id,
+                "generation": current_gen,
+                "best_fitness": best_fitness,
+                # "best_solution": f"{best_solution.tolist()}",
+                # "fitness": f"{fitness.tolist()}",
+                "avg_fitness": np.mean(fitness),
+                "std_fitness": np.std(fitness),
+                "avg_loudness": np.mean(loudness),
+                "std_loudness": np.std(loudness),
+                "avg_pulse_rate": np.mean(ba.pulse_rate),
+                # "std_pulse_rate": np.std(ba.pulse_rate),
+                "avg_distance_between_bats": np.mean(dist_between_bats),
+                # "std_distance_between_bats": np.std(dist_between_bats),
+                "avg_movement": np.mean(movement),
+                # "std_movement": np.std(movement),
+            })
+
+    db.close_conection()
+    best_fitness_overall = best_fitness
+    best_weights_overall = best_solution
 
     print(f"Melhor Fitness Inicial: {best_fitness_overall:.2f}")
 

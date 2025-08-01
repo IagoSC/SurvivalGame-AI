@@ -1,20 +1,26 @@
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib
-from matplotlib.animation import FuncAnimation
-
-# Set backend for non-interactive environments
-try:
-    matplotlib.use('TkAgg')  # Try interactive backend first
-except:
-    matplotlib.use('Agg')    # Fall back to non-interactive backend
-
-np.random.seed(100)
 
 
 class BatsAlgorithm:
-    def __init__(self, dimensions = 8, population_size = 100, max_gen = 1000, lower_bound = -1.0, upper_bound = 1.0, min_freq = 0.0, max_freq = 1.0, min_pulse = 0.005, max_pulse = 0.5, min_A = 0.5, max_A = 1.5, alpha = 0.9, gamma = 0.9, plot_evolution = False):
+    def __init__(self, 
+            dimensions = 8, 
+            population_size = 100, 
+            max_gen = 1000, 
+            lower_bound = -1.0, 
+            upper_bound = 1.0, 
+            min_freq = 0.0, 
+            max_freq = 1.0, 
+            min_pulse = 0.01, 
+            max_pulse = 0.8, 
+            min_A = 0.8, 
+            max_A = 1.5, 
+            alpha = 0.9, 
+            gamma = 0.25, 
+            plot_evolution = False, 
+            plotter= None,
+            elitism = True):
+
         self.population_size = population_size
         self.dimensions = dimensions
         self.max_gen = max_gen
@@ -24,8 +30,14 @@ class BatsAlgorithm:
         self.max_freq = max_freq
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
+        self.elitism = elitism
+
+        self.params = self.__dict__.copy()
+
         self.plot_evolution = plot_evolution
-        self.plotter = plotter() if plotter else None
+        self.plotter = plotter(lower_bound, upper_bound) if plot_evolution and plotter else None
+
+        print(f"Self values :: {self.__dict__}")
 
         self.positions = np.random.uniform(lower_bound, upper_bound,  (population_size, dimensions))
         self.velocities = np.zeros((population_size, dimensions)) 
@@ -34,6 +46,9 @@ class BatsAlgorithm:
         self.initial_pulse_rate = np.random.uniform(min_pulse, max_pulse, population_size)
         self.pulse_rate = self.initial_pulse_rate
 
+
+    def get_params(self):
+        return self.params
 
     def _evaluate_population_fitness(self, fitness_function) -> np.ndarray:
         self.current_gen_fitness = fitness_function(self.positions)
@@ -47,9 +62,6 @@ class BatsAlgorithm:
         direction = (current_best_position - self.positions)
         self.velocities += direction * self.frequencies[:, np.newaxis]
 
-    def _update_positions(self):
-        self.positions += self.velocities
-        self.positions = np.clip(self.positions, self.lower_bound, self.upper_bound)
 
     def _update_loudness(self):
         self.loudness *= self.alpha
@@ -58,7 +70,7 @@ class BatsAlgorithm:
         self.pulse_rate = self.initial_pulse_rate * (1 - math.exp(-self.gamma * current_iteration))
 
     def _fly_randomly(self, best_position: np.ndarray, avg_loudness: float) -> np.ndarray:
-        rand = np.random.uniform(0,1, self.population_size)
+        rand = np.random.uniform(0, 1, self.population_size)
         is_moving = np.greater(rand,  self.pulse_rate)
 
         best_positions = np.array([best_position] * self.population_size)
@@ -72,57 +84,65 @@ class BatsAlgorithm:
         epsilon = np.random.uniform(-1, 1, (self.population_size, self.dimensions)) * avg_loudness
         return np.clip(place_of_search +  epsilon, self.lower_bound, self.upper_bound)
 
-    def optimize(self, fitness_function) -> np.ndarray:
-        self._evaluate_population_fitness(fitness_function)
-        
-        for gen in range(self.max_gen):
-            if self.plot_evolution:
-                self.plotter.add_history(self.positions.copy(), self.current_gen_fitness.copy(), self.current_gen_fitness[self.current_best_idx])
-
-            best_position = self.positions[self.current_best_idx]
-            self._update_frequencies()
-            self._update_velocities(best_position)
+    def move_bats(self, fitness_function, gen_idx) -> np.ndarray:
+        if gen_idx == 0:
             self._evaluate_population_fitness(fitness_function)
 
-            # TODO 
-            # 1 - Try move anyway
-            # 2 - Try move only if fitness is better and loudnes check
-
-            avg_loudness = np.mean(self.loudness)
-            new_positions = self._fly_randomly(best_position, self.positions, avg_loudness)
-            new_fitness = fitness_function(new_positions)
-
-            is_better = np.greater_equal(new_fitness, self.current_gen_fitness)
-            is_below_loudness = np.less(np.random.uniform(0, 1, self.population_size), self.loudness)
-            update_positions = np.logical_and(is_better, is_below_loudness)
-
-            self.positions = np.where(
-                update_positions[:, np.newaxis],
-                new_positions,
-                self.positions
+        if self.plot_evolution:
+            self.plotter.add_history(
+                self.positions, 
+                self.current_gen_fitness, 
+                self.current_gen_fitness[self.current_best_idx]
             )
+        
+        best_position = self.positions[self.current_best_idx]
+        self._update_frequencies()
+        self._update_velocities(best_position)
 
-            self.current_gen_fitness = np.where(
-                update_positions,
-                new_fitness,
-                self.current_gen_fitness
-            )
+        # TODO 
+        # 1 - Try move anyway
+        # 2 - Try move only if fitness is better and loudnes check
 
-            self._update_loudness()
-            self._update_pulse_rate(gen)
-            self.current_best_idx = np.argmax(self.current_gen_fitness)
+        avg_loudness = np.mean(self.loudness)
+        new_positions = self._fly_randomly(best_position, avg_loudness)
+        new_fitness = fitness_function(new_positions)
+
+        top_3_indices = np.argsort(self.current_gen_fitness)[-3:]
+        is_top_3 = np.isin(np.arange(self.population_size), top_3_indices)
+        
+        if self.elitism:
+            is_top_3.fill(False)
+
+        is_better = np.greater_equal(new_fitness, self.current_gen_fitness)
+        is_below_loudness = np.less(np.random.uniform(0, 1, self.population_size), self.loudness)
+        update_positions = np.logical_or(is_better, np.logical_and(is_below_loudness, np.logical_not(is_top_3)))
+
+        self.positions = np.where(
+            update_positions[:, np.newaxis],
+            new_positions,
+            self.positions
+        )
+
+        self.current_gen_fitness = np.where(
+            update_positions,
+            new_fitness,
+            self.current_gen_fitness
+        )
+
+        self._update_loudness()
+        self._update_pulse_rate(gen_idx)
+        self.current_best_idx = np.argmax(self.current_gen_fitness)
             
-            print(f"Generation {gen + 1}")
-            print(f"Best fitness {self.current_gen_fitness[self.current_best_idx]}")
-            print(f"Avg fitness {np.mean(self.current_gen_fitness)}")
-            print(f"Std fitness {np.std(self.current_gen_fitness)}")
+        print(f"Generation {gen_idx + 1}")
+        print(f"Best fitness {self.current_gen_fitness[self.current_best_idx]}")
+        print(f"Avg fitness {np.mean(self.current_gen_fitness)}")
+        print(f"Std fitness {np.std(self.current_gen_fitness)}")
 
-        return self.positions[self.current_best_idx], self.current_gen_fitness[self.current_best_idx]
+
+        return self.positions[self.current_best_idx], self.current_gen_fitness[self.current_best_idx], 
 
     def plot(self, interval, save_path="bat_evolution.gif"):
         if self.plot_evolution:
-            self.plotter.plot_fitness_evolution()
-            self.plotter.plot_position_evolution()
             self.plotter.create_animation(interval=interval, save_path=save_path)
         else:
             print("Plotting is disabled. Set plot_evolution=True to create animations.")
