@@ -17,14 +17,14 @@ RENDER_TEST = True
 COLLECT_STATS = True
 USE_BIAS = True 
 
-game_config = GameConfig(num_players=POPULATION_SIZE,fps=1800)
+game_config = GameConfig(num_players=POPULATION_SIZE)
 
 
 def game_fitness_function(population: np.ndarray) -> float:
     agents = [
         NeuralNetworkAgent(
             grid_size=game_config.sensor_grid_size,
-            network_setup=weights
+            network_setup=weights,
             useBias=USE_BIAS
         ) for weights in population
     ] 

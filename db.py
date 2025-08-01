@@ -31,6 +31,7 @@ def init_db():
     cursor.execute(f'''
         CREATE TABLE IF NOT EXISTS runs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp                    TEXT,
             run_id                       TEXT,
             population_size              INTEGER,
             dimensions                   INTEGER,

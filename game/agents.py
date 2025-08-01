@@ -32,7 +32,7 @@ def neuralNetworkLayers(grid_size = 5, useBias = True):
     return layers_shape, nodes
 
 class NeuralNetworkAgent(Agent):
-    def __init__(self, grid_size: int, useBias =True, network_setup: np.ndarray):
+    def __init__(self, grid_size: int, network_setup: np.ndarray, useBias=True):
         """
         Initialize the neural network agent with weights.
         
@@ -50,10 +50,11 @@ class NeuralNetworkAgent(Agent):
         idx = 0
         for layer_in, layer_out in layers:
             w_size = layer_in * layer_out
-            b_size = layer_out
             weights.append(np.array(network_setup[idx: idx + w_size]).reshape(layer_in, layer_out))
             idx += w_size
-            if useBias:
+        if useBias:
+            for _, layer_out in layers:
+                b_size = layer_out
                 weights.append(np.array(network_setup[idx: idx + b_size]).reshape(layer_out))
                 idx += b_size
 
