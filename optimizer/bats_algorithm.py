@@ -25,6 +25,7 @@ class BatsAlgorithm:
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.plot_evolution = plot_evolution
+        self.plotter = plotter() if plotter else None
 
         self.positions = np.random.uniform(lower_bound, upper_bound,  (population_size, dimensions))
         self.velocities = np.zeros((population_size, dimensions)) 
@@ -56,7 +57,7 @@ class BatsAlgorithm:
     def _update_pulse_rate(self, current_iteration: int):
         self.pulse_rate = self.initial_pulse_rate * (1 - math.exp(-self.gamma * current_iteration))
 
-    def _fly_randomly(self, best_position: np.ndarray, current_positions: np.ndarray, avg_loudness: float) -> np.ndarray:
+    def _fly_randomly(self, best_position: np.ndarray, avg_loudness: float) -> np.ndarray:
         rand = np.random.uniform(0,1, self.population_size)
         is_moving = np.greater(rand,  self.pulse_rate)
 
@@ -76,9 +77,7 @@ class BatsAlgorithm:
         
         for gen in range(self.max_gen):
             if self.plot_evolution:
-                self.position_history.append(self.positions.copy())
-                self.fitness_history.append(self.current_gen_fitness.copy())
-                self.best_fitness_history.append(self.current_gen_fitness[self.current_best_idx])
+                self.plotter.add_history(self.positions.copy(), self.current_gen_fitness.copy(), self.current_gen_fitness[self.current_best_idx])
 
             best_position = self.positions[self.current_best_idx]
             self._update_frequencies()
