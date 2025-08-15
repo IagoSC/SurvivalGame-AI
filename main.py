@@ -120,11 +120,11 @@ def train_and_test():
                 "avg_loudness": np.mean(loudness),
                 "std_loudness": np.std(loudness),
                 "avg_pulse_rate": np.mean(ba.pulse_rate),
-                # "std_pulse_rate": np.std(ba.pulse_rate),
+                "std_pulse_rate": np.std(ba.pulse_rate),
                 "avg_distance_between_bats": np.mean(dist_between_bats),
-                # "std_distance_between_bats": np.std(dist_between_bats),
+                "std_distance_between_bats": np.std(dist_between_bats),
                 "avg_movement": np.mean(movement),
-                # "std_movement": np.std(movement),
+                "std_movement": np.std(movement),
             })
 
     db.close_connection()
