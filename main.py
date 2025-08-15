@@ -107,6 +107,7 @@ def train_and_test():
 
             dist_between_bats = np.linalg.norm(positions[:, np.newaxis] - positions, axis=2)
 
+            # Movement can be zero if no bats moved, but new positions were not accepted
             movement = np.linalg.norm(positions - last_positions, axis=1)
             
             db.add_to_table(table_bats, {
@@ -125,6 +126,8 @@ def train_and_test():
                 "std_distance_between_bats": np.std(dist_between_bats),
                 "avg_movement": np.mean(movement),
                 "std_movement": np.std(movement),
+                "avg_frequency": np.mean(ba.frequencies),
+                "std_frequency": np.std(ba.frequencies),
             })
 
     db.close_connection()

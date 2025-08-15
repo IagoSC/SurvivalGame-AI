@@ -21,7 +21,9 @@ def init_db():
             avg_distance_between_bats    REAL,
             std_distance_between_bats    REAL,
             avg_movement                 REAL,
-            std_movement                 REAL
+            std_movement                 REAL,
+            avg_frequency              REAL,
+            std_frequency              REAL
         )
     ''')
 
