@@ -4,3 +4,4 @@ bat_evolution.gif
 fitness_evolution.png
 position_evolution.png
 game.db
+best_weights.npy

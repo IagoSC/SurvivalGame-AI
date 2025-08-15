@@ -31,6 +31,10 @@ class BatsAlgorithm:
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
         self.elitism = elitism
+        self.min_pulse = min_pulse
+        self.max_pulse = max_pulse
+        self.min_A = min_A
+        self.max_A = max_A
 
         self.params = self.__dict__.copy()
 
@@ -56,7 +60,9 @@ class BatsAlgorithm:
         
     def _update_frequencies(self):
         beta = np.random.uniform(0, 1, self.population_size)
-        self.frequencies = self.min_freq + (self.max_freq - self.min_freq) * beta
+        f_max = np.argmax(self.frequencies)
+        f_min = np.argmin(self.frequencies)
+        self.frequencies = f_min + (f_max - f_min) * beta
 
     def _update_velocities(self, current_best_position: np.ndarray):
         direction = (current_best_position - self.positions)

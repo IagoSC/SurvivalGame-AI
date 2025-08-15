@@ -127,7 +127,7 @@ def train_and_test():
                 # "std_movement": np.std(movement),
             })
 
-    db.close_conection()
+    db.close_connection()
     best_fitness_overall = best_fitness
     best_weights_overall = best_solution
 
@@ -142,7 +142,7 @@ def train_and_test():
     print("\n--- Treinamento Concluído ---")
 
     if best_weights_overall is not None:
-        np.save("best_weights.npy", best_weights_overall)
+        np.save(f"best_weights_{run_id}.npy", best_weights_overall)
         print("Melhores pesos salvos em \'best_weights.npy\'")
  
         test_agent(best_weights_overall, num_tests=30, render=RENDER_TEST)
@@ -150,4 +150,6 @@ def train_and_test():
         print("Nenhum peso ótimo encontrado.")
 
 if __name__ == "__main__":
+    # best_weights_overall = np.load("best_weights.npy")
+    # test_agent(best_weights_overall, num_tests=30, render=False)
     train_and_test()
