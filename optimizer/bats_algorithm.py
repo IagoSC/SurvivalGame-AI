@@ -10,13 +10,13 @@ class BatsAlgorithm:
             lower_bound = -1.0, 
             upper_bound = 1.0, 
             min_freq = 0.0, 
-            max_freq = 1.0, 
+            max_freq = 0.5, 
             min_pulse = 0.01, 
             max_pulse = 0.8, 
             min_A = 0.8, 
             max_A = 1.5, 
-            alpha = 0.9, 
-            gamma = 0.25, 
+            alpha = 0.98, 
+            gamma = 0.05, 
             plot_evolution = False, 
             plotter= None,
             elitism = True):
@@ -99,10 +99,6 @@ class BatsAlgorithm:
         self._update_frequencies()
         self._update_velocities(best_position)
 
-        # TODO 
-        # 1 - Try move anyway
-        # 2 - Try move only if fitness is better and loudnes check
-
         avg_loudness = np.mean(self.loudness)
         new_positions = self._fly_randomly(best_position, avg_loudness)
         new_fitness = fitness_function(new_positions)
@@ -110,7 +106,7 @@ class BatsAlgorithm:
         top_3_indices = np.argsort(self.current_gen_fitness)[-3:]
         is_top_3 = np.isin(np.arange(self.population_size), top_3_indices)
         
-        if self.elitism:
+        if not self.elitism:
             is_top_3.fill(False)
 
         is_better = np.greater_equal(new_fitness, self.current_gen_fitness)
